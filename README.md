@@ -17,12 +17,17 @@ Natron and Vegas. It puts a shallow plane of focus across your footage and a
 real aperture behind it, which is the trick that makes a city look like a model
 railway.
 
+![A sharp wedge converging across an otherwise defocused field](docs/hero.png)
+
+<sub>The Tilted Plane shape with Tilt off neutral: the plane of focus is swung
+about the viewing axis, so the sharp zone converges across the frame instead of
+lying parallel to the horizon. Rendered by `tiltest`, the offline harness.</sub>
+
 ![The four focus shapes, each shown as a picture and as a field](docs/contact-sheet.png)
 
 <sub>Top row: the four focus shapes through the bokeh path. Middle row: the same
 four fields, shown by Show Focus — cold is the far side of focus, warm is the
-near side. Bottom row: the same four again through the cheaper Gaussian path.
-Rendered by `tiltest`, the offline harness.</sub>
+near side. Bottom row: the same four again through the cheaper Gaussian path.</sub>
 
 ## What it does
 
