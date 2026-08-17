@@ -176,6 +176,19 @@ head_ "Controls"
 run_check "no dead controls" python3 tools/sweep.py
 
 # ---------------------------------------------------------------------------
+head_ "Browser demo"
+# ---------------------------------------------------------------------------
+# The demo page holds a second copy of all eight shaders, and two copies drift.
+# Nothing else can catch it: a demo rendering a *plausible* picture looks
+# exactly like one rendering the right picture, and the whole claim of that page
+# is that it runs the plugin's own shader rather than a lookalike.
+if [ -f demo/tools/check_shaders.py ]; then
+    run_check "demo shaders identical to the plugin's" python3 demo/tools/check_shaders.py
+else
+    printf '  \033[33mskip\033[0m  no demo/tools/check_shaders.py\n'
+fi
+
+# ---------------------------------------------------------------------------
 head_ "OpenFX render"
 # ---------------------------------------------------------------------------
 PROBE="../resolume-ofx-bridge/build/ofxprobe"

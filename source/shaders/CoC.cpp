@@ -39,7 +39,7 @@ in vec2 uv;
 out vec4 fragColor;
 
 //= mirrored: Focus.cpp bandCoords()
-//`along` runs parallel to the band, `across` along its normal, both in units of
+//'along' runs parallel to the band, 'across' along its normal, both in units of
 //FRAME HEIGHT. The aspect correction is on the u axis only, which is what keeps
 //a circle circular and a band the same thickness when the composition changes
 //shape.

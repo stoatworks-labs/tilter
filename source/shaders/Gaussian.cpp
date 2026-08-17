@@ -61,7 +61,7 @@ out vec4 fragColor;
 //average with instead, so the blur has the same strength everywhere.
 //
 //Worth being straight about the evidence: this was changed while chasing a
-//measured non-monotonicity in `tiltest --blur`, on the theory that a sharp
+//measured non-monotonicity in tiltest --blur, on the theory that a sharp
 //edge rim growing with the radius was the cause. It was NOT -- swapping clamp
 //for mirror moved whole-frame detail from 3.24/4.26 to 3.24/4.26, which is to
 //say not at all. The real cause was the tap sum aliasing, fixed by the box

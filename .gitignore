@@ -11,3 +11,6 @@
 /.vscode/
 *.xcodeproj/xcuserdata/
 /build-*/
+
+# Local preview server config lives in the shared ~/.claude/launch.json
+/.claude/
