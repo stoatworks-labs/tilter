@@ -58,15 +58,47 @@ uniform float Highlight;
 in vec2 uv;
 out vec4 fragColor;
 
+
+//Reflect a picture-space coordinate back inside the frame, rather than clamp.
+//
+//Under a clamp every tap falling off the edge returns the edge texel, so the
+//outermost row is averaged largely with copies of itself and comes out less
+//blurred than the middle of the frame. Mirroring gives it real picture to
+//average with instead, so the blur has the same strength everywhere.
+//
+//Worth being straight about the evidence: this was changed while chasing a
+//measured non-monotonicity in `tiltest --blur`, on the theory that a sharp
+//edge rim growing with the radius was the cause. It was NOT -- swapping clamp
+//for mirror moved whole-frame detail from 3.24/4.26 to 3.24/4.26, which is to
+//say not at all. The real cause was the tap sum aliasing, fixed by the box
+//prefilter in Downsample.cpp.
+//
+//Mirroring is kept because it is the better edge rule on its own merits, not
+//because it fixed anything measured here.
+float mirror1( float x )
+{
+	x = abs( x );
+	x = mod( x, 2.0 );
+	return x > 1.0 ? 2.0 - x : x;
+}
+
+vec2 mirrorUV( vec2 p )
+{
+	return vec2( mirror1( p.x ), mirror1( p.y ) );
+}
+
 vec4 fetch( vec2 p )
 {
-	vec2 t = p * SourceMaxUV;
+	vec2 t = mirrorUV( p ) * SourceMaxUV;
 	return texture( SourceTexture, clamp( t, SourceHalfTexel, SourceMaxUV - SourceHalfTexel ) );
 }
 
 float radiusAt( vec2 p )
 {
-	return abs( texture( CoCTexture, clamp( p, vec2( 0.0 ), vec2( 1.0 ) ) ).r ) * MaxRadius;
+	//Mirrored to match fetch(): the radius used at a tap must come from the
+	//same place the colour did, or the reach test is comparing a tap against
+	//somebody else's circle of confusion.
+	return abs( texture( CoCTexture, mirrorUV( p ) ).r ) * MaxRadius;
 }
 
 /// How far the aperture opening extends at this angle, as a fraction of the

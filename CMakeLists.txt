@@ -76,6 +76,7 @@ add_library(tilter_core OBJECT
     source/Presets.h
     source/Shaders.h
     source/shaders/Vertex.cpp
+    source/shaders/Downsample.cpp
     source/shaders/Depth.cpp
     source/shaders/Smooth.cpp
     source/shaders/CoC.cpp

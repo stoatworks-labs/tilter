@@ -212,6 +212,7 @@ bool Tilter::compileShaders()
 	};
 
 	const Stage stages[] = {
+		{ &downsampleShader, shaders::kDownsampleFragment, "downsample" },
 		{ &depthShader, shaders::kDepthFragment, "depth" },
 		{ &smoothShader, shaders::kSmoothFragment, "smooth" },
 		{ &cocShader, shaders::kCoCFragment, "coc" },
@@ -304,9 +305,16 @@ FFResult Tilter::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	// around it as well, but the ordering here is the real defence: do not move
 	// these below the passes.
 	//------------------------------------------------------------------
+	//The blur works on a box-downsampled copy. See Downsample.cpp: it is what
+	//stops a sparse tap sum aliasing the picture's own fine detail, and it is
+	//also what makes a very large radius affordable.
+	const int blurW = std::max( 1, frameW / lens.blurScale );
+	const int blurH = std::max( 1, frameH / lens.blurScale );
+
 	if( !cocBuffer.Ensure( frameW, frameH, GL_RGBA16F )
-	    || !blurBuffer[ 0 ].Ensure( frameW, frameH, GL_RGBA16F )
-	    || !blurBuffer[ 1 ].Ensure( frameW, frameH, GL_RGBA16F ) )
+	    || !sourceBuffer.Ensure( blurW, blurH, GL_RGBA16F )
+	    || !blurBuffer[ 0 ].Ensure( blurW, blurH, GL_RGBA16F )
+	    || !blurBuffer[ 1 ].Ensure( blurW, blurH, GL_RGBA16F ) )
 	{
 		diag::error( "could not allocate the pass buffers" );
 		return FF_FAIL;
@@ -327,9 +335,16 @@ FFResult Tilter::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	const float inputHalfTexelV   = 0.5f / std::max( 1.0f, static_cast< float >( input.Height ) );
 
 	//Our own buffers have no padding, so their MaxUV is 1 and their half texel
-	//is off the frame size.
-	const float frameHalfTexelU = 0.5f / frameWf;
-	const float frameHalfTexelV = 0.5f / frameHf;
+	//is off their own size -- which for the blur chain is the DOWNSAMPLED size,
+	//not the composition's.
+	const float blurWf          = static_cast< float >( blurW );
+	const float blurHf          = static_cast< float >( blurH );
+	const float blurHalfTexelU  = 0.5f / blurWf;
+	const float blurHalfTexelV  = 0.5f / blurHf;
+
+	//The radius the blur passes work in. They run on the downsampled copy, so
+	//everything they measure is in its pixels.
+	const float blurRadius = lens.maxRadius / static_cast< float >( lens.blurScale );
 
 	//Every pass does its geometry in picture space and applies MaxUV at the
 	//fetch, so the vertex shader's scaling is always off.
@@ -385,7 +400,28 @@ FFResult Tilter::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	}
 
 	//------------------------------------------------------------------
-	// 2. The circle of confusion field.
+	// 2. The picture the blur will work on, box filtered down.
+	//------------------------------------------------------------------
+	{
+		ScopedFBOBinding fbo( sourceBuffer.GetGLID(), ScopedFBOBinding::RB_REVERT );
+		sourceBuffer.ResizeViewPort();
+		ScopedShaderBinding shader( downsampleShader.GetGLID() );
+		ScopedSamplerActivation sampler( 0 );
+		Scoped2DTextureBinding texture( input.Handle );
+
+		downsampleShader.Set( "MaxUV", kNoScale, kNoScale );
+		downsampleShader.Set( "InputTexture", 0 );
+		downsampleShader.Set( "SourceMaxUV", maxCoords.s, maxCoords.t );
+		downsampleShader.Set( "SourceHalfTexel", inputHalfTexelU, inputHalfTexelV );
+		//One COMPOSITION texel in picture space -- the block is measured in the
+		//full-resolution grid, not in the downsampled one.
+		downsampleShader.Set( "SourceTexel", 1.0f / frameWf, 1.0f / frameHf );
+		downsampleShader.Set( "Scale", lens.blurScale );
+		quad.Draw();
+	}
+
+	//------------------------------------------------------------------
+	// 3. The circle of confusion field.
 	//------------------------------------------------------------------
 	{
 		ScopedFBOBinding fbo( cocBuffer.GetGLID(), ScopedFBOBinding::RB_REVERT );
@@ -416,7 +452,8 @@ FFResult Tilter::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	}
 
 	//------------------------------------------------------------------
-	// 3. The blur. One model or the other, never both.
+	// 4. The blur. One model or the other, never both. Both run entirely in
+	//    downsampled space, reading the box-filtered copy.
 	//------------------------------------------------------------------
 	GLuint blurredTexture = 0;
 
@@ -427,7 +464,7 @@ FFResult Tilter::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 		ScopedShaderBinding shader( bokehShader.GetGLID() );
 
 		glActiveTexture( GL_TEXTURE0 );
-		glBindTexture( GL_TEXTURE_2D, input.Handle );
+		glBindTexture( GL_TEXTURE_2D, sourceBuffer.GetTextureInfo().Handle );
 		glActiveTexture( GL_TEXTURE1 );
 		glBindTexture( GL_TEXTURE_2D, cocBuffer.GetTextureInfo().Handle );
 		glActiveTexture( GL_TEXTURE0 );
@@ -435,10 +472,10 @@ FFResult Tilter::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 		bokehShader.Set( "MaxUV", kNoScale, kNoScale );
 		bokehShader.Set( "SourceTexture", 0 );
 		bokehShader.Set( "CoCTexture", 1 );
-		bokehShader.Set( "SourceMaxUV", maxCoords.s, maxCoords.t );
-		bokehShader.Set( "SourceHalfTexel", inputHalfTexelU, inputHalfTexelV );
-		bokehShader.Set( "FrameSize", frameWf, frameHf );
-		bokehShader.Set( "MaxRadius", lens.maxRadius );
+		bokehShader.Set( "SourceMaxUV", kNoScale, kNoScale );
+		bokehShader.Set( "SourceHalfTexel", blurHalfTexelU, blurHalfTexelV );
+		bokehShader.Set( "FrameSize", blurWf, blurHf );
+		bokehShader.Set( "MaxRadius", blurRadius );
 		bokehShader.Set( "Samples", lens.bokehSamples );
 		bokehShader.Set( "Blades", lens.blades );
 		bokehShader.Set( "BladeRotation", lens.bladeRotation );
@@ -454,14 +491,14 @@ FFResult Tilter::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	}
 	else
 	{
-		//Horizontal off the host's texture, then vertical off our own -- which
-		//is why the source MaxUV and half texel differ between the two passes.
+		//Both passes read one of our own downsampled buffers, so unlike the
+		//pre-downsample version they share a MaxUV and a half texel.
 		const struct
 		{
 			int to;
 			float dx;
 			float dy;
-			bool fromInput;
+			bool fromSource;
 		} passes[] = {
 			{ 0, 1.0f, 0.0f, true },
 			{ 1, 0.0f, 1.0f, false },
@@ -474,8 +511,8 @@ FFResult Tilter::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 			ScopedShaderBinding shader( gaussianShader.GetGLID() );
 
 			glActiveTexture( GL_TEXTURE0 );
-			glBindTexture( GL_TEXTURE_2D, pass.fromInput ? input.Handle
-			                                             : blurBuffer[ 0 ].GetTextureInfo().Handle );
+			glBindTexture( GL_TEXTURE_2D, pass.fromSource ? sourceBuffer.GetTextureInfo().Handle
+			                                              : blurBuffer[ 0 ].GetTextureInfo().Handle );
 			glActiveTexture( GL_TEXTURE1 );
 			glBindTexture( GL_TEXTURE_2D, cocBuffer.GetTextureInfo().Handle );
 			glActiveTexture( GL_TEXTURE0 );
@@ -483,15 +520,11 @@ FFResult Tilter::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 			gaussianShader.Set( "MaxUV", kNoScale, kNoScale );
 			gaussianShader.Set( "SourceTexture", 0 );
 			gaussianShader.Set( "CoCTexture", 1 );
-			gaussianShader.Set( "SourceMaxUV",
-			                    pass.fromInput ? maxCoords.s : 1.0f,
-			                    pass.fromInput ? maxCoords.t : 1.0f );
-			gaussianShader.Set( "SourceHalfTexel",
-			                    pass.fromInput ? inputHalfTexelU : frameHalfTexelU,
-			                    pass.fromInput ? inputHalfTexelV : frameHalfTexelV );
+			gaussianShader.Set( "SourceMaxUV", kNoScale, kNoScale );
+			gaussianShader.Set( "SourceHalfTexel", blurHalfTexelU, blurHalfTexelV );
 			gaussianShader.Set( "Direction", pass.dx, pass.dy );
-			gaussianShader.Set( "FrameSize", frameWf, frameHf );
-			gaussianShader.Set( "MaxRadius", lens.maxRadius );
+			gaussianShader.Set( "FrameSize", blurWf, blurHf );
+			gaussianShader.Set( "MaxRadius", blurRadius );
 			gaussianShader.Set( "Taps", lens.gaussianTaps );
 			quad.Draw();
 
@@ -505,7 +538,7 @@ FFResult Tilter::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 	}
 
 	//------------------------------------------------------------------
-	// 4. The photograph, straight into whatever the host handed us.
+	// 5. The photograph, straight into whatever the host handed us.
 	//------------------------------------------------------------------
 	{
 		glBindFramebuffer( GL_FRAMEBUFFER, pGL->HostFBO );
@@ -534,6 +567,10 @@ FFResult Tilter::ProcessOpenGL( ProcessOpenGLStruct* pGL )
 		compositeShader.Set( "Mix", lens.mix );
 		compositeShader.Set( "ShowFocus", lens.showFocus ? 1.0f : 0.0f );
 		compositeShader.Set( "FrameAspect", aspectRatio );
+		//Composition pixels, not blur-space: the composite decides where the
+		//blur is too small to be worth taking, and that judgement is about the
+		//picture the operator sees.
+		compositeShader.Set( "MaxRadius", lens.maxRadius );
 		quad.Draw();
 
 		glActiveTexture( GL_TEXTURE2 );
@@ -552,12 +589,14 @@ void Tilter::releaseBuffers()
 	for( auto& buffer : depthBuffer )
 		buffer.Destroy();
 	cocBuffer.Destroy();
+	sourceBuffer.Destroy();
 	for( auto& buffer : blurBuffer )
 		buffer.Destroy();
 }
 
 FFResult Tilter::DeInitGL()
 {
+	downsampleShader.FreeGLResources();
 	depthShader.FreeGLResources();
 	smoothShader.FreeGLResources();
 	cocShader.FreeGLResources();

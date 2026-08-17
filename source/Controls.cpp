@@ -182,9 +182,51 @@ Lens lens( const HostValues& host, float frameHeight )
 	//shallow lens indeed and is deliberately past what anybody needs.
 	out.maxRadius = host.blur * 0.08f * std::max( frameHeight, 1.0f );
 
+	/*
+	    Sampling density has to follow the radius, not just the Quality knob.
+
+	    A fixed tap budget spread over a growing radius means growing gaps
+	    between taps, and once those gaps are wider than the finest detail in
+	    the picture the blur stops averaging it and starts ALIASING it. The
+	    symptom is the opposite of what anyone looks for: past a certain Blur
+	    the picture gets *busier*, because a one-pixel grid sampled every three
+	    pixels comes back as a coarse moire that was never in the scene.
+
+	    Measured by `tiltest --blur`, which walks the Blur control and demands
+	    that detail fall monotonically. With a fixed budget it fell from 8.99 to
+	    2.87 and then rose to 16.70. Raising the budget alone got that to 4.26 --
+	    better, and still rising, which is what established that no affordable
+	    tap count fixes this on its own and sent the picture through a box
+	    prefilter first (Downsample.cpp). The two together are what made it
+	    monotonic.
+
+	    So: taps enough to keep the spacing near one pixel of the DOWNSAMPLED
+	    picture, and samples enough to keep roughly one per four square pixels of
+	    the disc -- with the Quality setting as the FLOOR and a multiple of it as
+	    the ceiling, so that Draft stays cheap and Best cannot run away to
+	    thousands of fetches. The ceiling is where quality is genuinely traded
+	    for speed. See AGENTS.md.
+	*/
 	const int quality = option( host.quality, kQualityCount );
-	out.gaussianTaps  = kQuality[ quality ].gaussianTaps;
-	out.bokehSamples  = kQuality[ quality ].bokehSamples;
+
+	const int baseTaps    = kQuality[ quality ].gaussianTaps;
+	const int baseSamples = kQuality[ quality ].bokehSamples;
+
+	//The blur runs on a box-downsampled copy, at a scale chosen so the radius
+	//in that copy stays around a dozen pixels however large it is in the
+	//composition. That is what keeps the tap spacing sub-pixel, which is what
+	//stops the sum aliasing -- see Downsample.cpp for the measurements.
+	out.blurScale = std::clamp( static_cast< int >( std::lround( out.maxRadius / 12.0f ) ), 1, 8 );
+
+	//Everything below is in BLUR space, not composition space.
+	const float blurRadius = out.maxRadius / static_cast< float >( out.blurScale );
+
+	const int wantedTaps = static_cast< int >( std::ceil( blurRadius ) );
+	out.gaussianTaps     = std::clamp( wantedTaps, baseTaps, baseTaps * 3 );
+
+	const int wantedSamples = static_cast< int >(
+		std::ceil( 3.14159265f * blurRadius * blurRadius / 4.0f ) );
+	out.bokehSamples = std::clamp( wantedSamples, baseSamples, baseSamples * 2 );
 
 	out.blades = bladesValue( option( host.blades, kBladesCount ) );
 	//A quarter turn covers every distinct orientation of any polygon with four

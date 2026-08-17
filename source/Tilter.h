@@ -121,6 +121,31 @@ public:
 	/// question of the same code. Public for the harness.
 	tilter::controls::HostValues hostValues() const;
 
+	/// Test seams: the intermediate buffers, by GL texture handle.
+	///
+	/// `tiltest --focus` is the only thing standing between Focus.cpp and its
+	/// GLSL mirror in CoC.cpp, and it can only do that job by reading what the
+	/// GPU actually wrote. Recovering the field from the finished picture was
+	/// the alternative and it is a worse test: the Show Focus overlay's tint
+	/// arithmetic would sit between the thing under test and the measurement,
+	/// so a wrong field and a wrong tint would be indistinguishable.
+	///
+	/// Valid only after a successful ProcessOpenGL, and only until the next
+	/// one. Zero before that.
+	GLuint CoCTextureForTest() const
+	{
+		return cocBuffer.GetTextureInfo().Handle;
+	}
+
+	/// The smoothed depth cues, for the same reason. The pre-pass that fills
+	/// this is GPU-only and has no C++ mirror, so --focus feeds the values it
+	/// reads here BACK into focus::defocus() -- which keeps the comparison
+	/// about the geometry arithmetic, which is the part that is mirrored.
+	GLuint DepthTextureForTest() const
+	{
+		return depthBuffer[ 0 ].GetTextureInfo().Handle;
+	}
+
 private:
 	/// The ParamID each presets::Param drives, in presets::Param order. The
 	/// preset table stays host-agnostic; this is the FFGL binding of it.
@@ -138,6 +163,7 @@ private:
 	bool compileShaders();
 	void releaseBuffers();
 
+	ffglex::FFGLShader downsampleShader;
 	ffglex::FFGLShader depthShader;
 	ffglex::FFGLShader smoothShader;
 	ffglex::FFGLShader cocShader;
@@ -147,8 +173,13 @@ private:
 	ffglex::FFGLScreenQuad quad;
 
 	tilter::PassBuffer depthBuffer[ 2 ];///< Quarter res. Image Depth mode only.
-	tilter::PassBuffer cocBuffer;       ///< The signed defocus field.
-	tilter::PassBuffer blurBuffer[ 2 ]; ///< Gaussian needs both; Bokeh uses one.
+	tilter::PassBuffer cocBuffer;       ///< The signed defocus field. Full resolution.
+
+	/// The box-downsampled picture the blur actually works on, and the blur's
+	/// own ping-pong. All three at composition size / lens.blurScale -- see
+	/// Downsample.cpp for why the blur does not run at full resolution.
+	tilter::PassBuffer sourceBuffer;
+	tilter::PassBuffer blurBuffer[ 2 ];///< Gaussian needs both; Bokeh uses one.
 
 	float params[ PT_COUNT ];
 

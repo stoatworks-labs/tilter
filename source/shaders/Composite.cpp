@@ -53,6 +53,7 @@ uniform float Aberration;
 uniform float Mix;
 uniform float ShowFocus;
 uniform float FrameAspect;
+uniform float MaxRadius;//composition pixels at full defocus
 
 in vec2 uv;
 out vec4 fragColor;
@@ -98,6 +99,24 @@ void main()
 	{
 		colour = fetchBlurred( uv );
 	}
+
+	/*
+	    Bring the sharp picture back where the lens is sharp.
+
+	    The blurred texture is a LOWER RESOLUTION buffer (Downsample.cpp), so
+	    taking it everywhere would cost the in-focus band the very sharpness the
+	    plugin exists to preserve. Instead the two are blended by how big the
+	    circle of confusion actually is: under about a pixel there is nothing for
+	    a blur to do and the untouched full-resolution input is exactly right,
+	    and by two pixels the blurred copy has taken over completely.
+
+	    The threshold is in pixels rather than in normalised defocus on purpose.
+	    "The blur is smaller than a pixel" is the honest test for whether a blur
+	    is visible at all, and it holds at any resolution and any Blur setting,
+	    where a fixed defocus threshold would not.
+	*/
+	float radiusPixels = defocus * MaxRadius;
+	colour = mix( fetchInput( uv ), colour, smoothstep( 0.5, 2.0, radiusPixels ) );
 
 	//Grade in straight alpha. Contrast on a premultiplied pixel pushes the
 	//colour and the coverage in the same direction and turns every soft edge

@@ -88,6 +88,11 @@ struct Lens
 	int gaussianTaps = 8;///< Per side, per pass.
 	int bokehSamples = 48;
 
+	/// How much smaller than the composition the blur is computed at, 1..8.
+	/// Chosen from the radius so the blur always works at a scale its tap
+	/// budget can sample without aliasing -- see Downsample.cpp.
+	int blurScale = 1;
+
 	int blades = 0;///< 0 is a circular aperture; otherwise 5..9.
 	float bladeRotation = 0.0f;
 	float highlight = 0.0f;

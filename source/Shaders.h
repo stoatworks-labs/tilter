@@ -9,6 +9,8 @@
 
     The stages, in order:
 
+      Downsample Box prefilter in front of the blur. See Downsample.cpp -- it is
+                 not an optimisation, it is what stops the blur aliasing.
       Depth      Image Depth mode only. Luminance and local contrast at quarter
                  resolution -- the two cues the depth guess is built from.
       Smooth     A fixed-radius separable blur over that, because a depth field
@@ -47,6 +49,7 @@ namespace tilter::shaders
 /// padding at once and a single vertex-stage scale cannot serve both.
 extern const char* const kVertex;
 
+extern const char* const kDownsampleFragment;
 extern const char* const kDepthFragment;
 extern const char* const kSmoothFragment;
 extern const char* const kCoCFragment;
