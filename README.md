@@ -132,6 +132,10 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build
 `CLAUDE.md` is the full command reference; `AGENTS.md` is the design and the
 traps.
 
+<!-- attributions:start -->
+This project is built on other people's work — see [ATTRIBUTIONS.md](ATTRIBUTIONS.md).
+<!-- attributions:end -->
+
 ## Licence
 
 MIT — see [LICENCE](LICENSE). The Resolume FFGL SDK is under its own licence;
