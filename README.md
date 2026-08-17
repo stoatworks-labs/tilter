@@ -29,6 +29,46 @@ lying parallel to the horizon. Rendered by `tiltest`, the offline harness.</sub>
 four fields, shown by Show Focus — cold is the far side of focus, warm is the
 near side. Bottom row: the same four again through the cheaper Gaussian path.</sub>
 
+**Try it in your browser, with your own footage:**
+[tilter-demo.stoatworks-labs.com](https://tilter-demo.stoatworks-labs.com) — the
+plugin's own shaders in WebGL2. Nothing is uploaded.
+
+**Video:** [What it does, in 49 seconds](https://www.youtube.com/watch?v=_CCMEQP3S94)
+
+<!-- downloads:start -->
+
+## Download
+
+**[v0.1.0](https://github.com/stoatworks-labs/tilter/releases/tag/v0.1.0)** — prebuilt for macOS and Windows. Pick your platform:
+
+<details>
+<summary><b>macOS</b> — Universal (Apple Silicon + Intel)</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`tilter-0.1.0-macos-universal.dmg`](https://github.com/stoatworks-labs/tilter/releases/download/v0.1.0/tilter-0.1.0-macos-universal.dmg) | 220 KB |
+| Universal (Apple Silicon + Intel) · .zip archive | [`tilter-macos-universal.zip`](https://github.com/stoatworks-labs/tilter/releases/latest/download/tilter-macos-universal.zip) | 174 KB |
+| Universal (Apple Silicon + Intel) · .zip archive (OpenFX — Resolve, Vegas, Nuke) | [`tilter-ofx-macos-universal.zip`](https://github.com/stoatworks-labs/tilter/releases/latest/download/tilter-ofx-macos-universal.zip) | 268 KB |
+
+</details>
+
+<details>
+<summary><b>Windows</b> — x64</summary>
+
+| Build | Download | Size |
+| --- | --- | --- |
+| x64 · .exe installer | [`tilter-0.1.0-windows-x86_64-setup.exe`](https://github.com/stoatworks-labs/tilter/releases/download/v0.1.0/tilter-0.1.0-windows-x86_64-setup.exe) | 216 KB |
+| x64 · .zip archive | [`tilter-windows-x86_64.zip`](https://github.com/stoatworks-labs/tilter/releases/latest/download/tilter-windows-x86_64.zip) | 110 KB |
+| x64 · .zip archive (OpenFX — Resolve, Vegas, Nuke) | [`tilter-ofx-windows-x86_64.zip`](https://github.com/stoatworks-labs/tilter/releases/latest/download/tilter-ofx-windows-x86_64.zip) | 76 KB |
+
+</details>
+
+All builds, checksums and release notes: [github.com/stoatworks-labs/tilter/releases](https://github.com/stoatworks-labs/tilter/releases).
+
+macOS builds are signed and notarised and open normally. The Windows builds are unsigned, so SmartScreen warns once.
+
+<!-- downloads:end -->
+
 ## What it does
 
 A tilt-shift lens is one whose focal plane is not parallel to the sensor.

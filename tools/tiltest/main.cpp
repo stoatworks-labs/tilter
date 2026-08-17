@@ -62,7 +62,9 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <fstream>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -542,6 +544,102 @@ std::map< std::string, unsigned int > parameterIndex( Tilter& plugin )
 			byName[ name ] = id;
 	}
 	return byName;
+}
+
+//---------------------------------------------------------------------------
+// Parameter automation for --pipe.
+//
+// A plain text file of `frame  Parameter Name  value` lines. Values are held
+// before the first key and after the last, and linearly interpolated between,
+// so the piece is edited by editing the cue sheet rather than by editing code.
+//---------------------------------------------------------------------------
+using Track = std::vector< std::pair< int, float > >;
+
+std::map< std::string, Track > loadScript( const std::string& path, std::string& error )
+{
+	std::map< std::string, Track > tracks;
+	std::ifstream file( path );
+	if( !file )
+	{
+		error = "cannot open " + path;
+		return tracks;
+	}
+
+	std::string line;
+	int lineNumber = 0;
+	while( std::getline( file, line ) )
+	{
+		++lineNumber;
+		const size_t hash = line.find( '#' );
+		if( hash != std::string::npos )
+			line.erase( hash );
+		std::istringstream in( line );
+
+		int frame = 0;
+		if( !( in >> frame ) )
+			continue;//blank or comment
+
+		//The name is everything up to the last token, because parameters have
+		//spaces in them and the value never does.
+		std::vector< std::string > words;
+		std::string word;
+		while( in >> word )
+			words.push_back( word );
+		if( words.size() < 2 )
+		{
+			error = path + ":" + std::to_string( lineNumber ) + ": expected `frame Parameter Name value`";
+			return {};
+		}
+
+		const float value = std::strtof( words.back().c_str(), nullptr );
+		words.pop_back();
+		std::string name = words.front();
+		for( size_t i = 1; i < words.size(); ++i )
+			name += " " + words[ i ];
+
+		tracks[ name ].emplace_back( frame, value );
+	}
+
+	for( auto& entry : tracks )
+		std::sort( entry.second.begin(), entry.second.end() );
+	return tracks;
+}
+
+float valueAt( const Track& track, int frame )
+{
+	if( track.empty() )
+		return 0.0f;
+	if( frame <= track.front().first )
+		return track.front().second;
+	if( frame >= track.back().first )
+		return track.back().second;
+
+	for( size_t i = 1; i < track.size(); ++i )
+	{
+		if( frame <= track[ i ].first )
+		{
+			const auto& a = track[ i - 1 ];
+			const auto& b = track[ i ];
+			const float span = static_cast< float >( b.first - a.first );
+			const float t = span > 0.0f ? ( static_cast< float >( frame - a.first ) / span ) : 1.0f;
+			return a.second + ( b.second - a.second ) * t;
+		}
+	}
+	return track.back().second;
+}
+
+bool readExactly( void* into, size_t bytes )
+{
+	unsigned char* p = static_cast< unsigned char* >( into );
+	size_t got = 0;
+	while( got < bytes )
+	{
+		const size_t n = fread( p + got, 1, bytes - got, stdin );
+		if( n == 0 )
+			return false;//clean EOF, or a short final frame we cannot use
+		got += n;
+	}
+	return true;
 }
 
 struct Options
@@ -1233,6 +1331,111 @@ int writeScene( const std::string& path, const Options& options )
 	return 0;
 }
 
+/**
+    --pipe: real footage through the real plugin, on a cue sheet.
+
+    Frames arrive as raw RGBA on stdin and leave as raw RGBA on stdout, so
+    ffmpeg does the decoding and the encoding and this does the lens. That is
+    how the project video is made, and it is a render rather than a screen
+    recording for a reason worth stating: an FFGL plugin has no window and no UI
+    of its own -- its control surface IS Resolume's inspector -- so "filming the
+    app" would mean filming Arena, whose clip grid and effects browser are
+    custom-drawn with nothing in the accessibility tree to address.
+
+    What is on screen is genuinely this plugin's output, from the same class
+    Resolume loads. It is just not a photograph of Resolume, and the end card
+    says so.
+*/
+int runPipe( int width, int height, const std::string& scriptPath, const Options& options )
+{
+	std::map< std::string, Track > tracks;
+	if( !scriptPath.empty() )
+	{
+		std::string error;
+		tracks = loadScript( scriptPath, error );
+		if( !error.empty() )
+		{
+			std::fprintf( stderr, "tiltest: %s\n", error.c_str() );
+			return 1;
+		}
+	}
+
+	Target target = makeTarget( width, height );
+
+	Tilter plugin;
+	applySets( plugin, options );
+
+	//Resolve the cue sheet's names once, against the plugin itself. A cue for a
+	//parameter that does not exist is a silent no-op otherwise, and the first
+	//sign of it is a beat in the finished video where nothing happens.
+	const auto byName = parameterIndex( plugin );
+	std::vector< std::pair< unsigned int, const Track* > > bound;
+	for( const auto& entry : tracks )
+	{
+		const auto found = byName.find( entry.first );
+		if( found == byName.end() )
+		{
+			std::fprintf( stderr, "tiltest: no parameter named \"%s\" in the script\n",
+			              entry.first.c_str() );
+			return 1;
+		}
+		bound.emplace_back( found->second, &entry.second );
+	}
+
+	GLuint input = 0;
+	glGenTextures( 1, &input );
+	glBindTexture( GL_TEXTURE_2D, input );
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	glBindTexture( GL_TEXTURE_2D, 0 );
+
+	const size_t frameBytes = static_cast< size_t >( width ) * height * 4;
+	std::vector< unsigned char > incoming( frameBytes );
+
+	int frame = 0;
+	while( readExactly( incoming.data(), frameBytes ) )
+	{
+		for( const auto& track : bound )
+			plugin.SetFloatParameter( track.first, valueAt( *track.second, frame ) );
+
+		//ffmpeg hands over rows top-down; GL wants them bottom-up, and the
+		//composite reads Focus Y as 0 at the top. Flipping on the way in and
+		//again on the way out keeps every coordinate in this file meaning what
+		//it says everywhere else.
+		const std::vector< unsigned char > flipped = flipRows( incoming, width, height );
+
+		glBindTexture( GL_TEXTURE_2D, input );
+		glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE,
+		                 flipped.data() );
+		glBindTexture( GL_TEXTURE_2D, 0 );
+
+		if( !render( plugin, target, input, width, height ) )
+		{
+			std::fprintf( stderr, "tiltest: render failed at frame %d\n", frame );
+			return 1;
+		}
+
+		const std::vector< unsigned char > out = flipRows( readBytes( target ), width, height );
+		if( fwrite( out.data(), 1, frameBytes, stdout ) != frameBytes )
+		{
+			std::fprintf( stderr, "tiltest: short write at frame %d\n", frame );
+			return 1;
+		}
+
+		++frame;
+	}
+
+	fflush( stdout );
+	std::fprintf( stderr, "tiltest: %d frames\n", frame );
+
+	glDeleteTextures( 1, &input );
+	releaseTarget( target );
+	return 0;
+}
+
 void usage()
 {
 	std::printf(
@@ -1247,7 +1450,10 @@ void usage()
 		"  --focus           CoC field against Focus.cpp, all four geometries\n"
 		"  --blur            the blur blurs, and only where it should\n"
 		"  --aperture        the aperture shape reaches the picture\n"
-		"  --presets         every factory preset distinct and non-degenerate\n" );
+		"  --presets         every factory preset distinct and non-degenerate\n"
+		"\n"
+		"  --pipe            raw RGBA frames in on stdin, out on stdout\n"
+		"  --script PATH     parameter automation: `frame Parameter Name value`\n" );
 }
 } // namespace
 
@@ -1276,6 +1482,8 @@ int main( int argc, char** argv )
 	std::string outPath;
 	std::string scenePath;
 	std::string sheetPath;
+	bool pipeMode = false;
+	std::string scriptPath;
 	bool doFocus    = false;
 	bool doBlur     = false;
 	bool doAperture = false;
@@ -1290,6 +1498,10 @@ int main( int argc, char** argv )
 			scenePath = argv[ ++i ];
 		else if( arg == "--sheet" && i + 1 < argc )
 			sheetPath = argv[ ++i ];
+		else if( arg == "--pipe" )
+			pipeMode = true;
+		else if( arg == "--script" && i + 1 < argc )
+			scriptPath = argv[ ++i ];
 		else if( arg == "--focus" )
 			doFocus = true;
 		else if( arg == "--blur" )
@@ -1323,6 +1535,13 @@ int main( int argc, char** argv )
 			CGLDestroyContext( context );
 			return 1;
 		}
+	}
+
+	if( pipeMode )
+	{
+		const int status = runPipe( options.width, options.height, scriptPath, options );
+		CGLDestroyContext( context );
+		return status;
 	}
 
 	int status = 0;
