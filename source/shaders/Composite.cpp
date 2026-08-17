@@ -145,7 +145,22 @@ void main()
 		//Sharp keeps its colour; blurred goes grey and takes a tint that says
 		//which side of focus it fell on. Warm for the near side, cold for the
 		//far side -- the same way a photographer would think about it.
-		vec3 tint = signedDefocus < 0.0 ? vec3( 1.0, 0.35, 0.15 ) : vec3( 0.15, 0.5, 1.0 );
+		//
+		//POSITIVE is the near side, and the sign is not arbitrary. In Tilted
+		//Plane the raw quantity is scene inverse depth minus lens inverse
+		//depth, and inverse depth grows as things get closer -- so positive
+		//means the scene is nearer than the plane of focus. Linear Band agrees
+		//by construction: positive is below the band, which is the near end of
+		//a frame shot looking down. Radial has no near and far at all and is
+		//always positive, so its single tint carries no meaning; that is fine,
+		//it only has to be uniform.
+		//
+		//This was the wrong way round until the contact sheet showed the top of
+		//a downward-looking frame -- the horizon, the furthest thing in shot --
+		//painted with the near-side colour. Every automated check passed with
+		//it inverted, because the field itself was correct and only the label
+		//on it was not.
+		vec3 tint = signedDefocus > 0.0 ? vec3( 1.0, 0.35, 0.15 ) : vec3( 0.15, 0.5, 1.0 );
 		float grey = dot( straight, vec3( 0.2126, 0.7152, 0.0722 ) );
 		vec3 marked = mix( straight, mix( vec3( grey ), tint, 0.6 ), defocus );
 		colour = vec4( marked * alpha, alpha );
