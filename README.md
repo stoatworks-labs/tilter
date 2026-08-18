@@ -7,9 +7,10 @@
 > actually wrote against an independent C++ implementation across all four focus
 > shapes — agreeing to the last bit 16-bit float storage can hold — walks the
 > blur control and demands the picture get smoother, and measures the aperture's
-> shape and size in the rendered frame (see [Status](#status)). It has **never
-> been loaded into Resolume or Resolve** — only compiled, rendered and measured
-> offline. Check it in your own rig before trusting it in a show.
+> shape and size in the rendered frame (see [Status](#status)). The FFGL build
+> has been **loaded into Resolume Arena and confirmed working**; the OpenFX build
+> has only ever been driven by a test probe, never opened in Resolve. Check it in
+> your own rig before trusting it in a show.
 
 A tilt-shift lens for [Resolume](https://resolume.com) Arena and Avenue, as an
 FFGL plugin — and the same thing again as an OpenFX plugin for Resolve, Nuke,
@@ -152,8 +153,12 @@ Verified on macOS 26.4 by `tools/verify.sh`:
 - **Every factory preset is distinct and none is degenerate.**
 - macOS build is universal (arm64 + x86_64) and exports `plugMain`.
 
-**Never loaded into Resolume or Resolve.** Windows is built in CI and has never
-been run. Never used on a live show.
+**Loaded into Resolume Arena on macOS and confirmed working** — so the plugin
+registers, instantiates and renders in a real host, which is the one thing an
+offline harness cannot tell you. What that does *not* cover: the **OpenFX build
+has never been opened in Resolve**, only driven by `ofxprobe`; the Windows build
+is made in CI and has never been run; and none of it has been used on a live
+show.
 
 One known limit, which is a property of the method rather than a bug: an
 isolated highlight of only two or three pixels will not form a clean bokeh disc,
