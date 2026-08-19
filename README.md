@@ -40,14 +40,14 @@ plugin's own shaders in WebGL2. Nothing is uploaded.
 
 ## Download
 
-**[v0.1.0](https://github.com/stoatworks-labs/tilter/releases/tag/v0.1.0)** — prebuilt for macOS and Windows. Pick your platform:
+**[v0.1.1](https://github.com/stoatworks-labs/tilter/releases/tag/v0.1.1)** — prebuilt for macOS and Windows. Pick your platform:
 
 <details>
 <summary><b>macOS</b> — Universal (Apple Silicon + Intel)</summary>
 
 | Build | Download | Size |
 | --- | --- | --- |
-| Universal (Apple Silicon + Intel) · .dmg disk image | [`tilter-0.1.0-macos-universal.dmg`](https://github.com/stoatworks-labs/tilter/releases/download/v0.1.0/tilter-0.1.0-macos-universal.dmg) | 220 KB |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`tilter-0.1.1-macos-universal.dmg`](https://github.com/stoatworks-labs/tilter/releases/download/v0.1.1/tilter-0.1.1-macos-universal.dmg) | 221 KB |
 | Universal (Apple Silicon + Intel) · .zip archive | [`tilter-macos-universal.zip`](https://github.com/stoatworks-labs/tilter/releases/latest/download/tilter-macos-universal.zip) | 174 KB |
 | Universal (Apple Silicon + Intel) · .zip archive (OpenFX — Resolve, Vegas, Nuke) | [`tilter-ofx-macos-universal.zip`](https://github.com/stoatworks-labs/tilter/releases/latest/download/tilter-ofx-macos-universal.zip) | 268 KB |
 
@@ -58,7 +58,7 @@ plugin's own shaders in WebGL2. Nothing is uploaded.
 
 | Build | Download | Size |
 | --- | --- | --- |
-| x64 · .exe installer | [`tilter-0.1.0-windows-x86_64-setup.exe`](https://github.com/stoatworks-labs/tilter/releases/download/v0.1.0/tilter-0.1.0-windows-x86_64-setup.exe) | 216 KB |
+| x64 · .exe installer | [`tilter-0.1.1-windows-x86_64-setup.exe`](https://github.com/stoatworks-labs/tilter/releases/download/v0.1.1/tilter-0.1.1-windows-x86_64-setup.exe) | 217 KB |
 | x64 · .zip archive | [`tilter-windows-x86_64.zip`](https://github.com/stoatworks-labs/tilter/releases/latest/download/tilter-windows-x86_64.zip) | 110 KB |
 | x64 · .zip archive (OpenFX — Resolve, Vegas, Nuke) | [`tilter-ofx-windows-x86_64.zip`](https://github.com/stoatworks-labs/tilter/releases/latest/download/tilter-ofx-windows-x86_64.zip) | 76 KB |
 
