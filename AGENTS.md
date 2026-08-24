@@ -275,3 +275,10 @@ cannot un-set the preset.
 where the operator's subject happens to be in their own footage and a preset
 reaching into them is not a look, it is breakage. Nor Quality, which is a choice
 about the machine the show is running on. Nor Mix, nor Show Focus.
+
+## Notes
+
+`docs/NOTES.md` carries this repo's working notes — current status, decisions
+already made, and the traps that have actually bitten. Read it before changing
+anything non-obvious. Cross-cutting fleet knowledge lives in
+[fleet-notes](https://github.com/stoatworks-labs/fleet-notes).
