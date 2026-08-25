@@ -32,8 +32,9 @@ macOS    ~/Documents/Resolume Arena/Extra Effects/
 Windows  %USERPROFILE%\Documents\Resolume Arena\Extra Effects\
 ```
 
-For OpenFX hosts, copy `Tilter.ofx.bundle` into `/Library/OFX/Plugins` or
-`C:\Program Files\Common Files\OFX\Plugins`. The macOS builds are signed and notarised.
+For OpenFX hosts, copy `Tilter.ofx.bundle` into `/Library/OFX/Plugins` (macOS),
+`C:\Program Files\Common Files\OFX\Plugins` (Windows) or `/usr/OFX/Plugins`
+(Linux). The macOS builds are signed and notarised.
 
 ---
 
