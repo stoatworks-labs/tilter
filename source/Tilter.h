@@ -121,6 +121,9 @@ public:
 	/// question of the same code. Public for the harness.
 	tilter::controls::HostValues hostValues() const;
 
+	/// The parameter ids a preset covers, for the offline host-behaviour check.
+	static const unsigned int* PresetParamIDsForTest( int& count );
+
 	/// Test seams: the intermediate buffers, by GL texture handle.
 	///
 	/// `tiltest --focus` is the only thing standing between Focus.cpp and its
@@ -160,6 +163,19 @@ private:
 	/// the host re-reads the sliders. `presetIndex` is 1-based; 0 is Custom.
 	void applyPreset( int presetIndex );
 
+	/// The value `presetIndex` holds for `id`, or -1 if that preset does not
+	/// cover it. `presetIndex` is 1-based; 0 is Custom and covers nothing.
+	float presetValue( int presetIndex, unsigned int id ) const;
+
+	/// Is this the HOST restating a value rather than the operator moving a
+	/// slider? Records `value` as the host's latest word either way.
+	bool hostIsRestatingItself( unsigned int index, float value );
+
+	/// Record the current params[] as the host's opening position. Must run
+	/// before applyPreset can, or the preset's own values become the host's
+	/// supposed last word -- see the note on hostSaid below.
+	void seedHostSaid();
+
 	bool compileShaders();
 	void releaseBuffers();
 
@@ -186,6 +202,16 @@ private:
 	/// button opens a browser and returns -- so without this GetFloatParameter
 	/// hands the host whatever was on the stack for them.
 	float params[ PT_COUNT ] = {};
+
+	/// What the HOST last said, which is not the same thing as what the plugin
+	/// is rendering with -- and not the same thing as hostValues(), which packs
+	/// params[] into the shared control struct. The host owns parameter state
+	/// and carries on pushing the values it still believes in, or hands back a
+	/// rounded copy of ours, and neither is an operator edit. Comparing an
+	/// incoming value against params[] alone cannot tell those apart, so a
+	/// preset dropped straight back to Custom on the host's own echo.
+	float hostSaid[ PT_COUNT ] = {};
+	bool hostSaidSeeded        = false;
 
 	/// GetTextParameter hands the host a bare pointer, so the string has to
 	/// outlive the call.

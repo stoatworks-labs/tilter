@@ -166,6 +166,7 @@ run_check "focus field matches its GLSL mirror, all four shapes" ./build/tiltest
 run_check "blur blurs where it should and only there"            ./build/tiltest --blur
 run_check "aperture shape and size reach the picture"            ./build/tiltest --aperture
 run_check "every factory preset is distinct and non-degenerate"  ./build/tiltest --presets
+run_check "presets survive every host behaviour"                 ./build/tiltest --hosts
 
 # ---------------------------------------------------------------------------
 head_ "Controls"
