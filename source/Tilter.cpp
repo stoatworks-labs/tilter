@@ -23,7 +23,7 @@ static CFFGLPluginInfo PluginInfo(
 	0,                                      // Plugin major version number
 	1,                                      // Plugin minor version number
 	FF_EFFECT,                              // Plugin type
-	"Tilt-shift lens with a real aperture", // Plugin description
+	"A tilt-shift lens with a real aperture behind it - the trick that makes a city look like a model railway.\n\nThe plugin decides how far each pixel is from focus; the blur decides what that looks like. Those two are completely independent, which is why there are four focus geometries and two blur models rather than eight effects.\n\nThat number is signed: 0 at the plane of focus, 1 at full blur, and the sign says which side you fell on. It is not decoration - chromatic aberration reverses across focus on a real lens, and the near and far sides do not blur at the same rate.\n\nStart from a Preset, at the bottom.",// Plugin description
 	"Tilter FFGL effect"                    // About
 );
 
