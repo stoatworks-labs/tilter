@@ -40,15 +40,15 @@ plugin's own shaders in WebGL2. Nothing is uploaded.
 
 ## Download
 
-**[v0.1.4](https://github.com/stoatworks-labs/tilter/releases/tag/v0.1.4)** — prebuilt for macOS, Windows and Linux. Pick your platform:
+**[v0.1.5](https://github.com/stoatworks-labs/tilter/releases/tag/v0.1.5)** — prebuilt for macOS, Windows and Linux. Pick your platform:
 
 <details>
 <summary><b>macOS</b> — Universal (Apple Silicon + Intel)</summary>
 
 | Build | Download | Size |
 | --- | --- | --- |
-| Universal (Apple Silicon + Intel) · .dmg disk image | [`tilter-0.1.4-macos-universal.dmg`](https://github.com/stoatworks-labs/tilter/releases/download/v0.1.4/tilter-0.1.4-macos-universal.dmg) | 214 KB |
-| Universal (Apple Silicon + Intel) · .zip archive | [`tilter-macos-universal.zip`](https://github.com/stoatworks-labs/tilter/releases/latest/download/tilter-macos-universal.zip) | 177 KB |
+| Universal (Apple Silicon + Intel) · .dmg disk image | [`tilter-0.1.5-macos-universal.dmg`](https://github.com/stoatworks-labs/tilter/releases/download/v0.1.5/tilter-0.1.5-macos-universal.dmg) | 216 KB |
+| Universal (Apple Silicon + Intel) · .zip archive | [`tilter-macos-universal.zip`](https://github.com/stoatworks-labs/tilter/releases/latest/download/tilter-macos-universal.zip) | 179 KB |
 | Universal (Apple Silicon + Intel) · .zip archive (OpenFX — Resolve, Vegas, Nuke) | [`tilter-ofx-macos-universal.zip`](https://github.com/stoatworks-labs/tilter/releases/latest/download/tilter-ofx-macos-universal.zip) | 275 KB |
 
 </details>
@@ -58,7 +58,7 @@ plugin's own shaders in WebGL2. Nothing is uploaded.
 
 | Build | Download | Size |
 | --- | --- | --- |
-| x64 · .exe installer | [`tilter-0.1.4-windows-x86_64-setup.exe`](https://github.com/stoatworks-labs/tilter/releases/download/v0.1.4/tilter-0.1.4-windows-x86_64-setup.exe) | 219 KB |
+| x64 · .exe installer | [`tilter-0.1.5-windows-x86_64-setup.exe`](https://github.com/stoatworks-labs/tilter/releases/download/v0.1.5/tilter-0.1.5-windows-x86_64-setup.exe) | 220 KB |
 | x64 · .zip archive | [`tilter-windows-x86_64.zip`](https://github.com/stoatworks-labs/tilter/releases/latest/download/tilter-windows-x86_64.zip) | 113 KB |
 | x64 · .zip archive (OpenFX — Resolve, Vegas, Nuke) | [`tilter-ofx-windows-x86_64.zip`](https://github.com/stoatworks-labs/tilter/releases/latest/download/tilter-ofx-windows-x86_64.zip) | 81 KB |
 
