@@ -28,6 +28,22 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.."
 
+# resolume-ofx-bridge, for ofxprobe. It sits beside this repo's checkout -- and
+# from a git worktree `..` is the worktrees folder, not Projects/resolume, so
+# the main checkout is found through git's common dir as well. TILTER_BRIDGE
+# overrides both.
+BRIDGE="${TILTER_BRIDGE:-}"
+if [ -z "$BRIDGE" ]; then
+    for candidate in "../resolume-ofx-bridge" \
+                     "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)")/../resolume-ofx-bridge"; do
+        if [ -d "$candidate/build" ]; then
+            BRIDGE="$candidate"
+            break
+        fi
+    done
+fi
+BRIDGE="${BRIDGE:-../resolume-ofx-bridge}"
+
 PASS=0
 FAIL=0
 
@@ -291,7 +307,7 @@ fi
 # ---------------------------------------------------------------------------
 head_ "OpenFX render"
 # ---------------------------------------------------------------------------
-PROBE="../resolume-ofx-bridge/build/ofxprobe"
+PROBE="$BRIDGE/build/ofxprobe"
 if [ -x "$PROBE" ]; then
     if "$PROBE" --dir build --render com.stoatworks.tilter --size 320x180 \
                 --out /tmp/tilter-ofx.bmp > /tmp/tilter-probe.log 2>&1; then
