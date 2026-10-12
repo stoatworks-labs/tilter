@@ -5,15 +5,15 @@
 > numerically by an offline harness that drives the real plugin class in a
 > headless GL context: it compares the circle-of-confusion field the GPU
 > actually wrote against an independent C++ implementation across all four focus
-> shapes — agreeing to the last bit 16-bit float storage can hold — walks the
+> shapes (agreeing to the last bit 16-bit float storage can hold), walks the
 > blur control and demands the picture get smoother, and measures the aperture's
 > shape and size in the rendered frame (see [Status](#status)). The FFGL build
 > has been **loaded into Resolume Arena and confirmed working**; the OpenFX build
-> has only ever been driven by a test probe, never opened in Resolve. Check it in
+> has only ever been driven by a test probe and has never been opened in Resolve. Check it in
 > your own rig before trusting it in a show.
 
 A tilt-shift lens for [Resolume](https://resolume.com) Arena and Avenue, as an
-FFGL plugin — and the same thing again as an OpenFX plugin for Resolve, Nuke,
+FFGL plugin, and the same thing again as an OpenFX plugin for Resolve, Nuke,
 Natron and Vegas. It puts a shallow plane of focus across your footage and a
 real aperture behind it, which is the trick that makes a city look like a model
 railway.
@@ -27,12 +27,12 @@ lying parallel to the horizon. Rendered by `tiltest`, the offline harness.</sub>
 ![The four focus shapes, each shown as a picture and as a field](docs/contact-sheet.png)
 
 <sub>Top row: the four focus shapes through the bokeh path. Middle row: the same
-four fields, shown by Show Focus — cold is the far side of focus, warm is the
+four fields, shown by Show Focus: cold is the far side of focus, warm is the
 near side. Bottom row: the same four again through the cheaper Gaussian path.</sub>
 
 **Try it in your browser, with your own footage:**
-[tilter-demo.stoatworks-labs.com](https://tilter-demo.stoatworks-labs.com) — the
-plugin's own shaders in WebGL2. Nothing is uploaded.
+[tilter-demo.stoatworks-labs.com](https://tilter-demo.stoatworks-labs.com) runs the
+plugin's own shaders in WebGL2. Nothing gets uploaded.
 
 **Video:** [What it does, in 49 seconds](https://www.youtube.com/watch?v=_CCMEQP3S94)
 
@@ -81,7 +81,7 @@ macOS builds are signed and notarised and open normally. The Windows builds are 
 
 ## What it does
 
-A tilt-shift lens is one whose focal plane is not parallel to the sensor.
+A tilt-shift lens is one whose focal plane isn't parallel to the sensor.
 Photographers bought them to keep buildings from leaning; everyone else
 discovered that pointing one at a city from a long way up makes it look like a
 model, because a plane of focus that shallow is something the eye only ever sees
@@ -101,10 +101,10 @@ you pick the shape of the focus and the character of the blur separately.
 | **Image Depth** | Guesses depth from the picture itself. Honestly a guess; see below. |
 
 **Tilted Plane is the one worth understanding.** For a flat subject a real
-tilted lens's sharp region is *exactly* a straight band, so this is not a
+tilted lens's sharp region is *exactly* a straight band, so this isn't a
 differently-shaped Linear Band. What it gives you is the **falloff**. A real
 lens blurs by the difference in *inverse* depth, and nothing is further away
-than infinity — so on the far side the blur ramps up and then **stops** at the
+than infinity, so on the far side the blur ramps up and then **stops** at the
 horizon, and the sky, the distant hills and the backs of the buildings all share
 one blur. On the near side it grows without limit. A plain linear band ramps
 symmetrically and forever in both directions, and that asymmetry is the thing
@@ -115,23 +115,23 @@ the way it does in a real tilt-shift photograph.
 
 **Image Depth is labelled a guess in the dropdown because it is one.** Distance
 scatters light: contrast washes out and brightness lifts, so smooth bright
-regions are treated as far away and detailed dark ones as near. That is right
+regions are treated as far away and detailed dark ones as near. That's right
 often enough to be useful on landscape and cityscape footage, and wrong on
 anything with a bright foreground or a dark sky. There is no depth channel
 coming out of Resolume, so this is inference from the picture and nothing more.
 
 ### Two blurs
 
-**Bokeh Disc** gathers over a real aperture — circular, or 5 to 9 blades — and
+**Bokeh Disc** gathers over a real aperture (circular, or 5 to 9 blades) and
 weights each sample by its own brightness, so highlights bloom into visible
-aperture shapes instead of smearing. That is the whole reason to stop a lens
-down and the reason this mode exists.
+aperture shapes instead of smearing. That's the whole reason to stop a lens
+down, and the reason this mode exists.
 
 **Gaussian** is the cheap one: two separable passes, clean and fast, but a
 bright point spreads into a soft blob rather than a disc.
 
 Either way the blur runs on a box-downsampled copy of the picture at a scale
-chosen from the radius. That is not only for speed — a sparse gather *aliases*
+chosen from the radius. That isn't only for speed: a sparse gather *aliases*
 its own source, and the artefact gets worse as the blur gets larger, which is
 the opposite of what anyone expects. See `AGENTS.md`.
 
@@ -139,7 +139,7 @@ the opposite of what anyone expects. See `AGENTS.md`.
 
 `Saturation` and `Contrast` push the picture the way a photograph of a small
 brightly lit object looks. `Vignette` and `Aberration` are the lens: aberration
-scales with defocus and reverses across the plane of focus, because that is what
+scales with defocus and reverses across the plane of focus, because that's what
 real glass does.
 
 `Show Focus` paints the field over the picture so you can place a focal plane by
@@ -150,9 +150,9 @@ looking at it rather than by squinting at softness.
 Verified on macOS 26.4 by `tools/verify.sh`:
 
 - **The focus field matches its GLSL mirror** for all four shapes. The three
-  analytic ones agree at exactly the 16-bit-float quantum (0.00049) — as close
-  as the buffer can represent — and the test carries a control case comparing
-  against the wrong shape, which must and does disagree.
+  analytic ones agree at exactly the 16-bit-float quantum (0.00049), as close
+  as the buffer can represent, and the test carries a control case comparing
+  against the wrong shape, which has to disagree and does.
 - **The blur blurs where it should and only there**: the sharp band keeps its
   detail, the far field loses it, and detail falls monotonically as the blur
   rises.
@@ -162,15 +162,15 @@ Verified on macOS 26.4 by `tools/verify.sh`:
 - **Every factory preset is distinct and none is degenerate.**
 - macOS build is universal (arm64 + x86_64) and exports `plugMain`.
 
-**Loaded into Resolume Arena on macOS and confirmed working** — so the plugin
+**Loaded into Resolume Arena on macOS and confirmed working**, so the plugin
 registers, instantiates and renders in a real host, which is the one thing an
-offline harness cannot tell you. What that does *not* cover: the **OpenFX build
+offline harness can't tell you. What that *doesn't* cover: the **OpenFX build
 has never been opened in Resolve**, only driven by `ofxprobe`; the Windows build
 is made in CI and has never been run; and none of it has been used on a live
 show.
 
 One known limit, which is a property of the method rather than a bug: an
-isolated highlight of only two or three pixels will not form a clean bokeh disc,
+isolated highlight of only two or three pixels won't form a clean bokeh disc,
 because a gather blur takes too few samples of it. Highlights of roughly ten
 pixels and up bokeh correctly. `AGENTS.md` explains why, and what the fix would
 have cost.
