@@ -5,7 +5,8 @@
 > numerically by an offline harness that drives the real plugin class in a
 > headless GL context: it compares the circle-of-confusion field the GPU
 > actually wrote against an independent C++ implementation across all four focus
-> shapes (agreeing to the last bit 16-bit float storage can hold), walks the
+> shapes (the three analytic ones agreeing to the last bit 16-bit float storage
+> can hold), walks the
 > blur control and demands the picture get smoother, and measures the aperture's
 > shape and size in the rendered frame (see [Status](#status)). The FFGL build
 > has been **loaded into Resolume Arena and confirmed working**; the OpenFX build
