@@ -19,6 +19,8 @@ Natron and Vegas. It puts a shallow plane of focus across your footage and a
 real aperture behind it, which is the trick that makes a city look like a model
 railway.
 
+The [project page](https://stoatworks-labs.com/software/tilter/) has the downloads, the [user guide](https://stoatworks-labs.com/software/tilter/guide/) and the video.
+
 ![A sharp wedge converging across an otherwise defocused field](docs/hero.png)
 
 <sub>The Tilted Plane shape with Tilt off neutral: the plane of focus is swung
